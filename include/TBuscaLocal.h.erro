@@ -1,0 +1,24 @@
+#ifndef TBUSCALOCAL_H
+#define TBUSCALOCAL_H
+
+#include <vector>
+#include "TSolucao.h"
+#include "TSolucao5.h"
+
+class TBuscaLocal
+{
+  public:
+    TBuscaLocal();
+    virtual ~TBuscaLocal();
+    int getCustoS(std::vector<int> s, TInstancia *pccp);
+    void blHMPB_PenalizacaoS1(TSolucao* original, float pRand);
+    void blHMPB_PenalizacaoS2(TSolucao* original, float pRand);
+    void blHMPP_PenalizacaoS1(TSolucao5* original, float pRand);
+    void blHMPP_PenalizacaoS2(TSolucao5* original, float pRand);
+  protected:
+  private:
+    std::vector<int> vetS;
+
+};
+
+#endif // TBUSCALOCAL_H

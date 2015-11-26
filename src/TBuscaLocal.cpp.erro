@@ -1,0 +1,165 @@
+#include "../include/TBuscaLocal.h"
+#include "../include/TMonitor.h"
+#include <climits>
+
+TBuscaLocal::TBuscaLocal()
+{
+  //ctor
+}
+
+TBuscaLocal::~TBuscaLocal()
+{
+  //dtor
+  vetS.clear();
+}
+
+int TBuscaLocal::getCustoS(std::vector<int> s, TInstancia *pccp){
+  int custo = 0;
+  for(int i=0; i<s.size();i++){
+    if(s.at(i)!=1) continue;
+    TMonitor *m=pccp->getVetMonitores().at(i);
+    custo+= m->getCusto();
+  }
+  return custo;
+}
+
+void TBuscaLocal::blHMPB_PenalizacaoS1(TSolucao* original, float pRand){
+  TInstancia *pccp = original->getInstancia();
+  std::vector<int> s1(original->getVetM());
+
+  for(int i=0; i<s1.size();i++){
+    if(s1.at(i)!=1) continue;
+    TMonitor *m = pccp->getVetMonitores().at(i);
+    if(m==NULL) continue;
+    int custo = m->getCusto();
+    m->setCusto(99999999);
+    TSolucao *s_ = new TSolucao(pccp);
+    s_->solucaoGulosa1(pRand);
+    m->setCusto(custo);
+    int c1 = getCustoS(s1,pccp);
+    int c2 = getCustoS(s_->getVetM(),pccp);
+    //std::cout<<c1<<" :: "<<c2<<"\n";
+    if(c1>c2){
+      std::vector<int> s2(s_->getVetM());
+      s1 = s2;
+      i=0;
+    }
+    delete s_;
+
+  }
+
+  original->setVetM(s1);
+}
+
+void TBuscaLocal::blHMPB_PenalizacaoS2(TSolucao* original, float pRand){
+  TInstancia *pccp = original->getInstancia();
+  std::vector<int> s1(original->getVetM());
+
+  for(int i=0; i<s1.size();i++){
+    if(s1.at(i)!=1) continue;
+    TMonitor *m = pccp->getVetMonitores().at(i);
+    if(m==NULL) continue;
+    int custo = m->getCusto();
+    m->setCusto(99999999);
+    TSolucao *s_ = new TSolucao(pccp);
+    s_->solucaoGulosa2(pRand);
+    m->setCusto(custo);
+    int c1 = getCustoS(s1,pccp);
+    int c2 = getCustoS(s_->getVetM(),pccp);
+    //std::cout<<c1<<" :: "<<c2<<"\n";
+    if(c1>c2){
+      std::vector<int> s2(s_->getVetM());
+      s1 = s2;
+      i=0;
+    }
+    delete s_;
+
+  }
+
+  original->setVetM(s1);
+}
+
+void TBuscaLocal::blHMPP_PenalizacaoS1(TSolucao5* original, float pRand){
+  TInstancia *pccp = original->getInstancia();
+  std::vector<int> s1(original->getVetM());
+
+  for(int i=0; i<s1.size();i++){
+    if(s1.at(i)!=1) continue;
+    TMonitor *m = pccp->getVetMonitores().at(i);
+    if(m==NULL) continue;
+    int custo = m->getCusto();
+    m->setCusto(99999999);
+    TSolucao5 *s_ = new TSolucao5(pccp);
+    s_->solucaoGulosa1(pRand);
+    m->setCusto(custo);
+    int c1 = getCustoS(s1,pccp);
+    int c2 = getCustoS(s_->getVetM(),pccp);
+    //std::cout<<c1<<" :: "<<c2<<"\n";
+    if(c1>c2){
+      std::vector<int> s2(s_->getVetM());
+      s1 = s2;
+      i=0;
+    }
+    delete s_;
+
+  }
+
+  original->setVetM(s1);
+}
+
+void TBuscaLocal::blHMPP_PenalizacaoS2(TSolucao5* original, float pRand){
+  /*
+  TInstancia *pccp = original->getInstancia();
+  std::vector<int> s1(original->getVetM());
+
+  std::vector<int> s2(original->getVetM());
+
+  for(int i=0; i<s1.size();i++){
+    if(s1.at(i)!=1) continue;
+    TMonitor *m = pccp->getVetMonitores().at(i);
+    if(m==NULL) continue;
+    int custo = m->getCusto();
+    m->setCusto(99999999);
+    TSolucao5 *s_ = new TSolucao5(pccp);
+    s_->solucaoGulosa2(pRand);
+    m->setCusto(custo);
+    int c1 = getCustoS(s2,pccp);
+    int c2 = getCustoS(s_->getVetM(),pccp);
+    //std::cout<<c1<<" :: "<<c2<<"\n";
+    if(c1>c2){
+      std::vector<int> s3(s_->getVetM());
+      s2 = s3;
+    }
+    delete s_;
+
+  }
+
+  original->setVetM(s2);
+*/
+
+  TInstancia *pccp = original->getInstancia();
+  std::vector<int> s1(original->getVetM());
+
+  for(int i=0; i<s1.size();i++){
+    if(s1.at(i)!=1) continue;
+    TMonitor *m = pccp->getVetMonitores().at(i);
+    if(m==NULL) continue;
+    int custo = m->getCusto();
+    m->setCusto(99999999);
+    TSolucao5 *s_ = new TSolucao5(pccp);
+    s_->solucaoGulosa2(pRand);
+    m->setCusto(custo);
+    int c1 = getCustoS(s1,pccp);
+    int c2 = getCustoS(s_->getVetM(),pccp);
+    //std::cout<<c1<<" :: "<<c2<<"\n";
+    if(c1>c2){
+      std::vector<int> s2(s_->getVetM());
+      s1 = s2;
+      i=0;
+    }
+    delete s_;
+
+  }
+
+  original->setVetM(s1);
+}
