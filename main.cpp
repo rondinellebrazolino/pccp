@@ -74,7 +74,7 @@ void melhorPar(char *arquivo, int seed, float pRand, char* heurist, bool limpeza
         TBuscaLocal *bl1 = new TBuscaLocal(pccp);
 
         t1 = clock();
-        bl1->buscaLoc_HMPR(s,pRand);
+        //bl1->buscaLoc_HMPR(s,pRand);
         t2= clock();
         intervalo = ((t2 - t1) / (CLOCKS_PER_SEC / 1000));
 
@@ -239,6 +239,7 @@ void pareto(char *arquivo, int seed, float pRand, char* heurist, bool limpeza, b
       s->limpeza2S();
       std::cout<<"\tFim da execucao da limpeza\n";
     }
+    if(buscaLoc) heuristica.append("+BL");
     t2= clock();
     long intervalo = ((t2 - t1) / (CLOCKS_PER_SEC / 1000));
 
@@ -249,18 +250,18 @@ void pareto(char *arquivo, int seed, float pRand, char* heurist, bool limpeza, b
 
       ///BUSCA LOCAL
       if(buscaLoc){
-        std::cout <<"\tTentando busca local 1: "<<pRand*100<<"%"<< std::endl;
+        std::cout <<"\tTentando busca local : "<<pRand*100<<"%"<< std::endl;
         TBuscaLocal *bl1 = new TBuscaLocal(pccp);
 
         t1 = clock();
-        bl1->buscaLoc_HMPP(s,pRand);
+        bl1->buscaLoc_HMPP(s,0,pRand);
         t2= clock();
         intervalo = ((t2 - t1) / (CLOCKS_PER_SEC / 1000));
 
-        fout<<"\t"<<heuristica<<"+BL"<<"\t"<<arquivo<<"\t"<<intervaloArq<<"\t"<<seed<<"\t"<<pRand<<
+        fout<<"\t"<<heuristica<<"\t"<<arquivo<<"\t"<<intervaloArq<<"\t"<<seed<<"\t"<<pRand<<
         "\t"<<s->getBSize()/pccp->getBSize()<<"\t"<<intervalo<<
         "\t"<<s->getNroMonitores()<<"\t"<<s->getCustoTot()<<"\t"<<s->verificadorFull()<<"\n";
-        std::cout << "\tFim tbusca local"<< std::endl;
+        std::cout << "\tFim busca local: rand = "<<pRand*100<<"%"<< std::endl;
 
         delete bl1;
       }
@@ -358,11 +359,11 @@ int main(int argc, char *argv[])
   int seed = vSeed[9];
   //int seed = time(NULL);
   srand(seed);///inicializa randomização
-  float pRand = .2;
+  float pRand = 0;
   bool limpeza= true;
 
 
-  pareto(arquivos[0],seed,pRand,"hmpp",limpeza,false,true);
+  pareto(arquivos[58],seed,pRand,"hmpp",limpeza,false,true);
   //pareto2(arquivos[0],seed,pRand,"hmpp2",limpeza,false,true);
   //melhorPar(arquivos[0],seed,pRand,"hmpr",limpeza,false,true);
   ///*** FIM - Bloco: Chamada manual para testes ***
@@ -370,7 +371,7 @@ int main(int argc, char *argv[])
 
 
 
-
+/*
   ///*** Bloco: Chamada automática para testes ***
   if(argc>4){
     int ixArq = atoi(argv[1]);
@@ -395,26 +396,29 @@ int main(int argc, char *argv[])
       melhorPar(arquivos[ixArq],seed,pRand,heu, limpeza,buscaLoc,false);
   }
   ///*** FIM - Bloco: Chamada automática para testes ***
+*/
 
 
 
 
 
-/*
   ///*** Bloco: testes extras (manuais) ***
   TInstancia* pccp= new TInstancia();
   pccp->loadFile(arquivos[2]);
-  pccp->exportar();
+  //pccp->exportar();
   THPareto* s= new THPareto(pccp);
   s->construtivo(0, 0.2,0,false);
   std::cout<<s->getNroMonitores()<<"\t"<<s->getCustoTot()<<"\t"<<s->verificadorFull()<<"\n";
   s->limpeza2S();
   std::cout<<s->getNroMonitores()<<"\t"<<s->getCustoTot()<<"\t"<<s->verificadorFull()<<"\n";
+  TBuscaLocal* bl= new TBuscaLocal(pccp);
+  bl->buscaLoc_HMPP(s,0,.2);
+  std::cout<<s->getNroMonitores()<<"\t"<<s->getCustoTot()<<"\t"<<s->verificadorFull()<<"\n";
 
   delete s;
   delete pccp;
   ///*** FIM - Bloco: testes extras (manuais) ***
-*/
+
 
 
 

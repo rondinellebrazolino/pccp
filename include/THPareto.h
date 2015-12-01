@@ -20,8 +20,11 @@ class THPareto
 {
   public:
     THPareto(TInstancia* _pccp);
-    THPareto(TInstancia* _pccp, std::vector<bool> vetM, std::vector<bool> vetB);
+    THPareto(std::vector<bool> _monitores,std::vector<bool> _branchs,TInstancia* _pccp,
+    int _custoTotal,int _bSize,int** _vetMxB);
     virtual ~THPareto();
+
+    void zerarSolucao();
 
     std::list<int*> criarLcBranchs();
     std::list<TPar*> criarLcPares(int bId);
@@ -39,6 +42,10 @@ class THPareto
     int getNroMonitores();
     int getCustoTot();
     std::vector<bool> getMonitores();
+    std::vector<bool> getBranchs();
+
+    THPareto* criarCopia();
+    void mudarUmMonitor(int mId);
 
     bool removerMonitor(int mId, bool comInterrupt);
     bool removerMonitor2(int mId);
@@ -59,8 +66,6 @@ class THPareto
     std::vector<bool> monitores;
     ///vetor de branchs (true indica que o branchs está coberto na solução)
     std::vector<bool> branchs;
-    ///vetor de cobertura (indica quantos pares o branch bi possui ativos na solução)--- AINDA N USADO
-    std::vector<int> cobertura;
     ///Instancia original
     TInstancia* pccp;
     ///custo total corrente da solução

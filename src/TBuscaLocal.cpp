@@ -13,61 +13,37 @@ TBuscaLocal::~TBuscaLocal()
 }
 
 
-void TBuscaLocal::blHMPR(THMelhorPar* s, float pRand, int corte){
+void TBuscaLocal::blHMPP(THPareto* s, float pRandB, float pRandP, int corte, bool gravarLog){
 
-  std::vector<bool> m1(s->getMonitores());
+  THPareto* sEstrela= s->criarCopia();///obtém uma cópia da solução corrente
+  for(int i=0; i<pccp->getNSize(); i++){///loop nos monitores da instancia
+    if(pccp->getMonitor(i)==NULL) continue;
+    THPareto* sLinha= s->criarCopia();///solução temporária
+    sLinha->mudarUmMonitor(i);///flip no monitor i
+    if(sLinha->getMonitores().at(i)) sLinha->limpeza2S();///se o monitor foi colocado na sol., efetua a limpeza
+    else sLinha->construtivo(pRandB,pRandP,corte,gravarLog);///caso contrário executa novamente o construtivo
+    std::cout<<sLinha->getCustoTot()<<"\\"<<sEstrela->getCustoTot()<<"\n";
+    if(sEstrela->getCustoTot() > sLinha->getCustoTot() && sLinha->verificarS()){///se o custo melhorou, atualiza a sol.
+      sEstrela->zerarSolucao();
+      sEstrela= sLinha->criarCopia();
+    }
+    //delete sLinha;
+  }//fim para i
 
-  for(int i=0; i<m1.size();i++){
-    if(!(m1[i])) continue;
-    m1[i]= false;
-    s->setMonitores(m1);
-    s->construtivo(pRand,0,corte, false);
-    if(s->verificarS() && s->getCustoTot()<corte){
-      corte= s->getCustoTot();
-      i=0;
-    }else m1[i]= true;
-  }
+  s->zerarSolucao();
+  s= sEstrela->criarCopia();
 
-  s->setMonitores(m1);
-}
-
-
-void TBuscaLocal::blHMPP(THPareto* s, float pRand, int corte){
-
-  std::vector<bool> m1(s->getMonitores());
-
-  for(int i=0; i<m1.size();i++){
-    if(!(m1[i])) continue;
-    m1[i]= false;
-    s->setMonitores(m1);
-    s->construtivo(pRand,0,corte, false);
-    if(s->verificarS() && s->getCustoTot()<corte){
-      corte= s->getCustoTot();
-      i=0;
-    }else m1[i]= true;
-  }
-
-  s->setMonitores(m1);
-}
-
-void TBuscaLocal::buscaLoc_HMPR(THMelhorPar* s, float pRand){
-  int custo;
-
-  do{
-    custo = s->getCustoTot();
-    blHMPR(s,pRand,custo);
-  }while(s->getCustoTot()<custo);
+  //delete sEstrela;
 
 }
 
+void TBuscaLocal::buscaLoc_HMPP(THPareto* s, float pRandB, float pRandP){
+  int custo=0;
 
-void TBuscaLocal::buscaLoc_HMPP(THPareto* s, float pRand){
-  int custo;
-
-  do{
-    custo = s->getCustoTot();
-    blHMPP(s,pRand,custo);
-  }while(s->getCustoTot()<custo);
+  //do{
+    //custo = s->getCustoTot();
+    blHMPP(s,pRandB,pRandP,custo,false);
+  //}while(s->getCustoTot()<custo);
 
 }
 

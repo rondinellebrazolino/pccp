@@ -13,7 +13,6 @@ THPareto::THPareto(TInstancia* _pccp){
   pccp= _pccp;
   monitores.resize(pccp->getNSize(),false);
   branchs.resize(pccp->getNSize(),false);
-  cobertura.resize(pccp->getNSize(),0);
   custoTotal=0;
   bSize=0;
 
@@ -37,34 +36,51 @@ THPareto::THPareto(TInstancia* _pccp){
 
 }
 
-THPareto::THPareto(TInstancia* _pccp, std::vector<bool> vetM, std::vector<bool> vetB){
-  //ctor
+THPareto::THPareto(std::vector<bool> _monitores,std::vector<bool> _branchs,TInstancia* _pccp,
+int _custoTotal,int _bSize,int** _vetMxB){
+
   ///inicialização das variáveis
   pccp= _pccp;
 
-  std::vector<bool>v1(vetM);
-  std::vector<bool>v2(vetB);
+  std::vector<bool>v1(_monitores);
+  std::vector<bool>v2(_branchs);
   monitores= v1;
   branchs= v2;
-  custoTotal=0;
-  bSize=0;
-
-
-  ///loop nos pares da instancia
-  for(int i=0; i<pccp->getNSize();i++){
-    custoTotal+= monitores[i]?pccp->getMonitor(i)->getCusto():0;
-    bSize+= branchs[i]?1:0;
-    for(int j=i; j<pccp->getNSize();j++)
-      ///atualiza o "custo" do par
-      if(pccp->existePar(i,j)) pccp->getPar(i,j)->setCustoPar(pccp->getMonitor(i)->getCusto()+pccp->getMonitor(j)->getCusto());
+  custoTotal=_custoTotal;
+  bSize=_bSize;
+  //matriz: monitor x branch
+  vetMxB = new int*[pccp->getNSize()];
+  for (int i = 0; i < pccp->getNSize(); ++i){
+    vetMxB[i] = new int[pccp->getNSize()];
+    for(int j=0;j<pccp->getNSize();j++)
+      vetMxB[i][j]= _vetMxB[i][j];
   }
+
+
 }
 
 THPareto::~THPareto(){
   //dtor
+  for(int i=0; i<pccp->getNSize();i++){
+    delete [] vetMxB[i];
+  }
+  delete [] vetMxB;
+
   monitores.clear();
   branchs.clear();
-  cobertura.clear();
+
+}
+
+void THPareto::zerarSolucao(){
+  monitores.clear();
+  branchs.clear();
+  bSize=0;
+  custoTotal=0;
+
+  for(int i=0; i<pccp->getNSize();i++){
+    delete [] vetMxB[i];
+  }
+  delete [] vetMxB;
 
 }
 
@@ -193,7 +209,6 @@ void THPareto::cobrirBranchsPar(int m1Id, int m2Id){
     for(std::list<int>::iterator it=b.begin();it!=b.end();it++){
       int ix= *it;
       if(branchs[ix]) continue;///ignora os branchs que já estão na solução
-      cobertura.at(ix)++;
       branchs[ix]= true;///marca o branch como coberto
       bSize++;///incrementa o contador de branchs cobertos
     }
@@ -256,8 +271,6 @@ void THPareto::construtivo(float pRandB, float pRandP, int corte, bool gravarLog
     limite--;
   }
 
-  //std::cout<<"Executando limpeza\n";
-  //limpezaS();
 }
 
 
@@ -283,6 +296,45 @@ int THPareto::getCustoTot(){
 std::vector<bool> THPareto::getMonitores(){
   std::vector<bool> v(monitores);
   return v;
+}
+
+///retorna uma cópia do vetor de monitores da solução
+std::vector<bool> THPareto::getBranchs(){
+  std::vector<bool> v(branchs);
+  return v;
+}
+
+void THPareto::mudarUmMonitor(int mId){
+
+  ///atualiza a matrix MxB na linha do monitor que será marcado como parte da solução
+  for(int i=0; i<pccp->getNSize();i++){
+    if(!monitores[mId] || !monitores[i] || pccp->getPar(mId,i)==NULL) continue;
+    std::list<int> b= pccp->getPar(mId,i)->getLstBranchs();
+    for(std::list<int>::iterator it=b.begin(); it!=b.end();++it){
+      int ix= *it;
+      int incremento= (monitores[mId])?-1:1;
+      vetMxB[mId][ix]+=incremento;
+      vetMxB[i][ix]+=incremento;
+      vetMxB[0][ix]+=incremento;
+    }//fim iterator
+  }//fim para i
+
+  bSize=0;
+  for(int i=0; i<pccp->getNSize();i++){
+    if(pccp->getBranch(i)==NULL) continue;
+    branchs[i]= (vetMxB[0][i]!=0);
+    if(branchs[i]) bSize++;
+  }
+
+  custoTotal+= monitores[mId]?(-1)*pccp->getMonitor(mId)->getCusto():pccp->getMonitor(mId)->getCusto();
+  monitores[mId]= !monitores[mId];
+
+  //exportar();
+}
+
+THPareto* THPareto::criarCopia(){
+  THPareto* s= new THPareto(monitores,branchs,pccp,custoTotal,bSize,vetMxB);
+  return s;
 }
 
 ///marca como inativo um monitor na solução corrente
@@ -331,66 +383,20 @@ bool THPareto::removerMonitor2(int mId){
   monitores[mId]= false;
   custoTotal-=pccp->getMonitor(mId)->getCusto();
 
-
-  ///atualização da matriz MxB
-  for(int i=0; i<pccp->getNSize(); i++){
-    for(int j=0; j<pccp->getNSize();j++){
-        vetMxB[i][j]=0;
-    }//fim para J
-  }//fim para I
-  for(int i=0; i<pccp->getNSize(); i++){
-    if(!monitores[i]) continue;
-    for(int j=i; j<pccp->getNSize();j++){
-      if(!monitores[j] || pccp->getPar(i,j)==NULL) continue;
-      std::list<int> b= pccp->getPar(i,j)->getLstBranchs();
-      for(std::list<int>::iterator it=b.begin(); it!=b.end();++it){
-        int ix= *it;
-        vetMxB[i][ix]++;
-        vetMxB[j][ix]++;
-        vetMxB[0][ix]++;
-      }//fim para IT
-    }//fim para J
-  }//fim para I
-
-  return true;
-
-/*
-  std::string nomeF= pccp->getNome()+"_remocao_log.pccp";
-  std::ofstream fout(nomeF.c_str(), std::ios::app);///arquivo de destino
-
-  int* vSoma= new int[pccp->getNSize()];
-  fout<<"Entrada: \t";
   for(int i=0; i<pccp->getNSize();i++){
-    vSoma[i]=vetMxB[0][i];
-    fout<<vSoma[i]<<"\t";
-  }
-  for(int i=0; i<pccp->getNSize();i++){
-    if(!(monitores[i])||pccp->getPar(mId,i)==NULL) continue;
-    std::list<int>b = pccp->getPar(mId,i)->getLstBranchs();///lista de branchs que o par (m,i) cobre
-    for(std::list<int>::iterator it= b.begin(); it!=b.end();++it){
+    if(!monitores[i] || pccp->getPar(mId,i)==NULL) continue;
+    std::list<int> b= pccp->getPar(mId,i)->getLstBranchs();
+    for(std::list<int>::iterator it=b.begin(); it!=b.end();++it){
       int ix= *it;
-      vSoma[ix]-=2;
-      if(vSoma[ix]<=0){
-        return false;
-      }
+      vetMxB[mId][ix]--;
+      vetMxB[i][ix]--;
+      vetMxB[0][ix]--;
     }
-  }//fim para i
 
-  fout<<"\nSaida: \t";
-  for(int i=0; i<pccp->getNSize();i++){
-    //std::cout<<vetMxB[0][i]<<" "<<vSoma[i]<<"\n";
-    vetMxB[0][i]= vSoma[i];
-    fout<<vetMxB[0][i]<<"\t";
   }
-  delete [] vSoma;
 
-  monitores[mId]= false;///desativa o monitor na solução corrente
-  custoTotal-= pccp->getMonitor(mId)->getCusto();///atualiza o custo total da solução corrente
-
-  fout<<"\n";
-  fout.close();
   return true;
-*/
+
 }
 
 
@@ -404,7 +410,6 @@ void THPareto::setMonitores(std::vector<bool> v){
   custoTotal=0;
   for(int i=0; i<pccp->getNSize();i++){
     branchs[i]= false;
-    cobertura[i]=0;
     if(monitores[i] && pccp->getMonitor(i)!=NULL) custoTotal+= pccp->getMonitor(i)->getCusto();
   }
 
@@ -422,7 +427,7 @@ void THPareto::setMonitores(std::vector<bool> v){
     if(branchs[i]) bSize++;///se o branch foi coberto, incrementa o contador da solução corrente
   }//fim para I
 }
-
+/*
 ///executa uma limpeza gulosa na solução
 void THPareto::limpezaS(bool comInterrupt){
   ///lista de monitores candidatos (todos da instancia)
@@ -461,7 +466,7 @@ void THPareto::limpezaS(bool comInterrupt){
   //setMonitores(monitores);
 
 }
-
+*/
 ///executa uma limpeza gulosa na solução
 void THPareto::limpeza2S(){
 

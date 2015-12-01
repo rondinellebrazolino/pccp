@@ -13,11 +13,8 @@ class TBuscaLocal
     TBuscaLocal(TInstancia* _pccp);
     virtual ~TBuscaLocal();
 
-    void blHMPR(THMelhorPar* s, float pRand, int corte);
-    void buscaLoc_HMPR(THMelhorPar* s, float pRand);
-
-    void blHMPP(THPareto* s, float pRand, int corte);
-    void buscaLoc_HMPP(THPareto* s, float pRand);
+    void blHMPP(THPareto* s, float pRandB, float pRandP, int corte, bool gravarLog);
+    void buscaLoc_HMPP(THPareto* s, float pRandB, float pRandP);
 
   protected:
   private:
